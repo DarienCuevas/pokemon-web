@@ -111,6 +111,10 @@ export default function PokemonBuscar() {
     }
   }
 
+
+  //estas sesuponen que es un cambio para despues
+  
+
   return (
     <div>
       <form onSubmit={handleClick}>
@@ -158,7 +162,6 @@ export default function PokemonBuscar() {
               <img src={sprites.front_shiny} alt="shiny" />
             </div>
           )}
-
           {abilities.length > 0 && (
             <div>
               <h3>habilidades:</h3>
