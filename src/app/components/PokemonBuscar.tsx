@@ -166,7 +166,7 @@ export default function PokemonBuscar() {
                 {abilities.map((ability, index) => (
                   <li key={index}>{ability.ability.name}</li>
                 ))}
-              </ul>   
+              </ul>
             </div>
           )}
 
