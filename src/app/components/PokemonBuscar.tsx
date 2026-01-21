@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState, FormEvent } from "react";
 
-type pokemon = {
+type Pokemon = {
   id: number;
   name: string;
   location_area_encounters: string;
@@ -64,71 +64,55 @@ type Location = {
 
 export default function PokemonBuscar() {
   const [name, setName] = useState("");
-  const [pokemon, setPokemon] = useState<pokemon | null>(null);
+  const [pokemon, setPokemon] = useState<Pokemon | null>(null);
   const [error, setError] = useState("");
   const [locations, setLocations] = useState<Location[]>([]);
-  const [sprites, setSprites] = useState<Sprites | null>(null);
-  const [abilities, setAbilities] = useState<Ability[]>([]);
-  const [types, setTypes] = useState<Types[]>([]);
-  const [stats, setStats] = useState<Stats[]>([]);
+  const [search, setSearch] = useState("")
 
-  async function handleClick(element: React.FormEvent<HTMLFormElement>) {
+  function handleClick(element: FormEvent<HTMLFormElement>) {
     element.preventDefault();
     setError("");
     setPokemon(null);
-
-    try {
-      const endpoint = `pokemon/${name.toLowerCase()}`;
-      console.log(name.toLowerCase());
-      console.log(`https://pokeapi.co/api/v2/${endpoint}/`);
-
-      //traigo datos del pokemon
-      const resPokemon = await fetch(`https://pokeapi.co/api/v2/${endpoint}`);
-      if (!resPokemon.ok) {
-        throw new Error("Pokémon no encontrado");
-      }
-
-      //guardo datos del pokemon solicitados en type
-      const data = await resPokemon.json();
-      setPokemon(data);
-
-      //locations
-      const resLocations = await fetch(data.location_area_encounters);
-      const localizacion = await resLocations.json();
-      console.log("location:", locations);
-      setLocations(localizacion);
-      console.log(localizacion);
-
-      //sprites
-      console.log("sprites:", sprites);
-      setSprites(data.sprites);
-      console.log(data.sprites);
-
-      //abilities
-      console.log("abilities:", abilities);
-      setAbilities(data.abilities);
-      console.log(data.abilities);
-
-      //types
-      console.log("types:", types);
-      setTypes(data.types);
-      console.log(data.types);
-
-      //stats
-      console.log("stats:", stats);
-      setStats(data.stats);
-      console.log(data.types);
-    } catch (error) {
-      setError("no se encontró el pokemon");
-    }
+    setLocations([]);
+    setSearch(name.toLowerCase());
   }
+
+    useEffect (() => {
+      if (!search) return;
+
+      async function fetchPokemon () {
+        try {
+          const res = await fetch((`https://pokeapi.co/api/v2/pokemon/${search}`))
+
+        if (!res.ok) throw new Error()
+          const data = await res.json()
+        setPokemon(data);
+      } catch {
+        setError ("No se encontró al pokemon")
+      }
+    };
+    fetchPokemon()
+  }, [search])
+
+  useEffect (() => {
+    if (!pokemon) return;
+    const pokemonActual = pokemon
+
+    async function fetchLocations () {
+      const res = await fetch(pokemonActual.location_area_encounters)
+      const data = await res.json();
+      setLocations(data)
+    }
+    fetchLocations()
+  }, [pokemon])
+  
 
   return (
     <div>
       <form onSubmit={handleClick}>
         <input
           type="text"
-          placeholder="Ej: pikachu"
+          placeholder="Ej: ceruledge"
           value={name}
           onChange={(e) => setName(e.target.value)}
         />
@@ -137,79 +121,62 @@ export default function PokemonBuscar() {
 
       {error && <p>{error}</p>}
 
-      {pokemon && (
+      {pokemon &&  (
         <div>
-          <h2>{pokemon.name}</h2>
-          <p>id: {pokemon.id}</p>
+          <h2>Nombre: {pokemon.name}</h2>
+          <h2>Numero de pokedex: {pokemon.id}</h2>
 
-{locations.length > 0 && (
-  <div>
-    <h3>Método de encuentro:</h3>
-    <ul>
-      {locations.map((location, index) => (
-        <li key={index}>
-          Area: {location.location_area.name}
+          <strong>Normal: </strong><img src={pokemon.sprites.front_default}></img>
+          <strong>Shiny: </strong><img src={pokemon.sprites.front_shiny}></img>
 
-          {location.version_details.map((version, vIndex) => (
-            <div key={vIndex}>
-              <p>Version: {version.version.name}</p>
+        <h2>Tipos:</h2>
+        {pokemon.types.map(t => (
+          <p key={t.slot}> {t.type.name}</p>
+        ))}
 
-              {version.encounter_details.map((encounter, eIndex) => (
-                <div key={eIndex}>
-                  <p>Método: {encounter.method.name}</p>
+      <h2>Estadisticas: </h2>
+      {pokemon.stats.map(st => (
+          <p key={st.stat.name}>
+            {st.stat.name}: {st.base_stat}
+          </p>
+      ))}
 
-                  {encounter.condition_values.map((condition, cIndex) => (
-                    <p key={cIndex}>
-                      Condición: {condition.name}
-                    </p>
+      
+      {locations.length > 0 && (
+        <div>
+          <h2>Encuentros:</h2>
+          <ul>
+          {locations.map((loc, index) => (
+            <div key={index}>
+              <h4>Area:{loc.location_area.name}</h4>
+
+              {loc.version_details.map((version, vIndex) => (
+                <div key={vIndex}>
+                  <p>Juego: {version.version.name}</p>
+
+                  {version.encounter_details.map((encounter, eIndex) => (
+                    <div key={eIndex}>
+                      <p>Metodo: {encounter.method.name}</p>
+
+                    {encounter.condition_values.length > 0 && (
+                      <ul>
+                        {encounter.condition_values.map((cond, cIndex) => (
+                          <li key={cIndex}>
+                            {cond.name}
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                    </div>
                   ))}
                 </div>
               ))}
             </div>
           ))}
-        </li>
-      ))}
-    </ul>
-  </div>
-)}
+          </ul>
+        </div>
+      )}
 
-
-          {sprites && (
-            <div>
-              <h3>Sprites:</h3>
-              <img src={sprites.front_default} alt="default" />
-              <img src={sprites.front_shiny} alt="shiny" />
-            </div>
-          )}
-
-          {abilities.length > 0 && (
-            <div>
-              <h3>habilidades:</h3>
-              <ul>
-                {abilities.map((ability, index) => (
-                  <li key={index}>{ability.ability.name}</li>
-                ))}
-              </ul>
-            </div>
-          )}
-
-          {types.length > 0 && (
-            <div>
-              <h3>Tipo:</h3>
-              <ul>
-                {types.map((type, index) => (
-                  <li key={index}>{type.type.name}</li>
-                ))}
-              </ul>
-            </div>
-          )}
-
-          {stats.map((stat, index) => (
-            <div key={index}>
-              <p>{stat.stat.name}</p>
-              <p>{stat.base_stat}</p>
-            </div>
-          ))}
         </div>
       )}
     </div>
