@@ -1,8 +1,10 @@
 "use client";
 
 import { useEffect, useState, FormEvent } from "react";
+import PokemonCard from "./Card";
 
-type Pokemon = {
+
+export type Pokemon = {
   id: number;
   name: string;
   location_area_encounters: string;
@@ -42,7 +44,7 @@ type Stats = {
   };
 };
 
-type Location = {
+export type Location = {
   location_area: {
     name: string;
   };
@@ -115,70 +117,23 @@ export default function PokemonBuscar() {
           placeholder="Ej: ceruledge"
           value={name}
           onChange={(e) => setName(e.target.value)}
-        />
+        ></input>
         <button type="submit">Buscar</button>
       </form>
 
       {error && <p>{error}</p>}
 
       {pokemon &&  (
-        <div>
-          <h2>Nombre: {pokemon.name}</h2>
-          <h2>Numero de pokedex: {pokemon.id}</h2>
-
-          <strong>Normal: </strong><img src={pokemon.sprites.front_default}></img>
-          <strong>Shiny: </strong><img src={pokemon.sprites.front_shiny}></img>
-
-        <h2>Tipos:</h2>
-        {pokemon.types.map(t => (
-          <p key={t.slot}> {t.type.name}</p>
-        ))}
-
-      <h2>Estadisticas: </h2>
-      {pokemon.stats.map(st => (
-          <p key={st.stat.name}>
-            {st.stat.name}: {st.base_stat}
-          </p>
-      ))}
+          <PokemonCard
+          pokemon={pokemon}
+          locations={locations}
+          />
+      )}
+          </div>
+      
+      );
+    }
 
       
-      {locations.length > 0 && (
-        <div>
-          <h2>Encuentros:</h2>
-          <ul>
-          {locations.map((loc, index) => (
-            <div key={index}>
-              <h4>Area:{loc.location_area.name}</h4>
-
-              {loc.version_details.map((version, vIndex) => (
-                <div key={vIndex}>
-                  <p>Juego: {version.version.name}</p>
-
-                  {version.encounter_details.map((encounter, eIndex) => (
-                    <div key={eIndex}>
-                      <p>Metodo: {encounter.method.name}</p>
-
-                    {encounter.condition_values.length > 0 && (
-                      <ul>
-                        {encounter.condition_values.map((cond, cIndex) => (
-                          <li key={cIndex}>
-                            {cond.name}
-                          </li>
-                        ))}
-                      </ul>
-                    )}
-                    </div>
-                  ))}
-                </div>
-              ))}
-            </div>
-          ))}
-          </ul>
-        </div>
-      )}
-
-        </div>
-      )}
-    </div>
-  );
-}
+      
+      

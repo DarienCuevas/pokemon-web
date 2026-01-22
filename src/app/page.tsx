@@ -2,6 +2,7 @@ import PokemonLista from "./components/PokemonLista";
 import Header from "./components/Header";
 import Footer from "./components/Footer";
 import PokemonBuscar from "./components/PokemonBuscar";
+import Card from "./components/Card";
 
 
 export default function Home() {
@@ -10,6 +11,7 @@ export default function Home() {
       <Header />
       <PokemonLista />
       <PokemonBuscar />
+      <Card />
       <Footer />
     </div>
   );
