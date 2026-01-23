@@ -12,6 +12,10 @@ export type Pokemon = {
   abilities: Ability[];
   types: Types[];
   stats: Stats[];
+  species: {
+    name: string;
+    url: string;
+  }
 };
 
 type Sprites = {
@@ -64,12 +68,39 @@ export type Location = {
   }[];
 };
 
+  export type Species = {
+    generation: {
+      name: string;
+      url: string;
+    }
+  }
+
+  export type Generation = {
+    name: string;
+    main_region: {
+      name: string;
+      url: string;
+    }
+  }
+
+  export type Region = {
+    name: string; 
+    pokedexes: {
+      name: string;
+      url: string;
+    }[];
+  }
+
 export default function PokemonBuscar() {
   const [name, setName] = useState("");
   const [pokemon, setPokemon] = useState<Pokemon | null>(null);
   const [error, setError] = useState("");
   const [locations, setLocations] = useState<Location[]>([]);
   const [search, setSearch] = useState("")
+  const [region, setRegion] = useState<Region | null>(null);
+  const [generation, setGeneration] = useState<Generation | null>(null);
+  const [species, setSpecies] = useState<Species | null>(null);
+
 
   function handleClick(element: FormEvent<HTMLFormElement>) {
     element.preventDefault();
@@ -77,6 +108,7 @@ export default function PokemonBuscar() {
     setPokemon(null);
     setLocations([]);
     setSearch(name.toLowerCase());
+
   }
 
     useEffect (() => {
@@ -85,6 +117,7 @@ export default function PokemonBuscar() {
       async function fetchPokemon () {
         try {
           const res = await fetch((`https://pokeapi.co/api/v2/pokemon/${search}`))
+          console.log(res)
 
         if (!res.ok) throw new Error()
           const data = await res.json()
@@ -98,15 +131,51 @@ export default function PokemonBuscar() {
 
   useEffect (() => {
     if (!pokemon) return;
-    const pokemonActual = pokemon
 
     async function fetchLocations () {
-      const res = await fetch(pokemonActual.location_area_encounters)
+      try {
+      const res = await fetch(pokemon!.location_area_encounters)
+
+      if(!res.ok) throw new Error()
       const data = await res.json();
       setLocations(data)
+    } catch {
+      setError("No se encontró ninguna localizacion")
     }
+    };
     fetchLocations()
   }, [pokemon])
+
+  useEffect (() => {
+    if(!pokemon?.species?.name) return;
+
+    async function fetchRegion () {
+      try {
+        const speciesRes = await fetch (pokemon!.species.name);
+        if(!speciesRes.ok) throw new Error();
+        const species: Species = await speciesRes.json();
+        
+        const generationRes = await fetch(species.generation.name)
+        if(!generationRes.ok) throw new Error();
+        const generation: Generation = await generationRes.json();
+
+        const regionRes =  await fetch(generation.main_region.name);
+        if(!regionRes.ok) throw new Error();
+        const region: Region = await regionRes.json();
+
+        setRegion(region);
+        setGeneration(generation);
+        setSpecies(species);
+
+      } catch(err) {
+        console.error("error de fetchin", err);
+        setRegion(null);
+      }
+    }
+
+    fetchRegion();
+  }, [pokemon]);
+
   
 
   return (
@@ -123,10 +192,13 @@ export default function PokemonBuscar() {
 
       {error && <p>{error}</p>}
 
-      {pokemon &&  (
+      {pokemon &&  species && generation && region &&(
           <PokemonCard
           pokemon={pokemon}
           locations={locations}
+          region={region}
+          generation={generation}
+          species={species}
           />
       )}
           </div>

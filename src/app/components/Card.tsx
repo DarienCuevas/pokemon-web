@@ -1,20 +1,25 @@
 "use client";
-import type {Pokemon, Location} from "./PokemonBuscar"
+import type {Pokemon, Location, Species, Region, Generation} from "./PokemonBuscar"
 
 type PokemonCardProps = {
-    pokemon: Pokemon
-    locations: Location[]
+    pokemon: Pokemon;
+    locations: Location[];
+    region: Region | null;
+    species: Species;
+    generation: Generation;
+    
 }
 
 
-export default function PokemonCard({ pokemon, locations }: PokemonCardProps) {
+export default function PokemonCard({ pokemon, locations, species, generation, region}: PokemonCardProps) {
     if (!pokemon) {
         return null;
     }
   return (
     <div>
-      <h2>{pokemon.name}</h2>
-      <p> {pokemon.id}</p>
+      <h2>Nombre: {pokemon.name}</h2>
+
+      <p>Numero pokedex: {pokemon.id}</p>
 
       <div>
         {pokemon.sprites.front_default && (
@@ -28,11 +33,32 @@ export default function PokemonCard({ pokemon, locations }: PokemonCardProps) {
       <h3>Tipos:</h3>
       <div>
         {pokemon.types.map(t => (
-          <span key={t.slot}>
-            {t.type.name}
-            </span>
+          <li key={t.slot}>{t.type.name}
+            </li>
         ))}
       </div>
+      
+
+        {species && (
+          <p>generacion: {species.generation.name}</p>
+        )}
+
+        {generation && (
+          <p>region principal: {generation.main_region.name}</p>
+        )}
+
+        {region && (
+          <div>
+            <h3>pokedex</h3>
+            <ul>
+              {region.pokedexes.map((p) => (
+                <li key={p.name}>
+                  {p.name}
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
 
       <h3>Estadísticas:</h3>
       <ul>
@@ -42,6 +68,7 @@ export default function PokemonCard({ pokemon, locations }: PokemonCardProps) {
           </li>
         ))}
       </ul>
+
 
       {locations.length > 0 && (
         <>
