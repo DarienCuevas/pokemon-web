@@ -1,58 +1,97 @@
 "use client";
-import type {Pokemon, Location, Species, Region, Generation} from "./PokemonBuscar"
+import type {Pokemon, Species, Region, Generation, abilityDetails} from "./PokemonBuscar"
+import { getSpanishText } from "@/lib/translate"
 
 type PokemonCardProps = {
     pokemon: Pokemon;
-    locations: Location[];
     region: Region | null;
     species: Species;
     generation: Generation;
+    abilitydetails?: abilityDetails | null;
     
 }
 
 
-export default function PokemonCard({ pokemon, locations, species, generation, region}: PokemonCardProps) {
+export default function PokemonCard({ pokemon, species, generation, region, abilitydetails}: PokemonCardProps) {
     if (!pokemon) {
         return null;
     }
+
+    const generationNameEs = generation
+  ? getSpanishText(generation.names, n => n.name, generation.name)
+  : "";
+
+    
   return (
-    <div>
-      <h2>Nombre: {pokemon.name}</h2>
+    <div className="bg-white rounded-2xl shadow-xl p-8 max-w-2xl mx-auto border-4 border-yellow-400">
+      <h2 className="text-3xl font-bold capitalize text-center text-red-600 mb-2">{pokemon.name}</h2>
+      <p className="text-center text-gray-600 font-semibold mb-6">#{ String(pokemon.id).padStart(3, '0')}</p>
 
-      <p>Numero pokedex: {pokemon.id}</p>
-
-      <div>
+      <div className="flex justify-center gap-4 mb-8">
         {pokemon.sprites.front_default && (
-          <img src={pokemon.sprites.front_default} />
+          <div className="bg-yellow-100 rounded-lg p-4">
+            <p className="text-black font-semibold">Normal: </p>
+            <img src={pokemon.sprites.front_default} className="w-40 h-40" />
+          </div>
         )}
         {pokemon.sprites.front_shiny && (
-          <img src={pokemon.sprites.front_shiny} />
+          <div className="bg-yellow-100 rounded-lg p-4">
+            <p className="text-black font-semibold">Shiny: </p>
+            <img src={pokemon.sprites.front_shiny} className="w-40 h-40" />
+          </div>
         )}
       </div>
 
-      <h3>Tipos:</h3>
-      <div>
+      <h3 className="text-xl font-bold text-red-600 mb-4">Tipos: </h3>
+      <div className="flex gap-2 mb-6 flex-wrap">
         {pokemon.types.map(t => (
-          <li key={t.slot}>{t.type.name}
-            </li>
+          <span 
+            key={t.slot}
+            className="bg-blue-500 text-white px-4 py-2 rounded-full font-semibold capitalize"
+          >
+            {t.type.name}
+          </span>
         ))}
       </div>
+
+      {abilitydetails && (
+        <div className="mb-6 bg-purple-100 p-4 rounded-lg">
+          <h3 className="text-xl font-bold text-purple-600 mb-2">Habilidad: </h3>
+          <p className="text-lg font-semibold text-gray-700 capitalize mb-2">
+            {getSpanishText(abilitydetails.names || [], n => n.name, abilitydetails.name)}
+          </p>
+        </div>
+      )}
       
 
         {species && (
-          <p>generacion: {species.generation.name}</p>
+          <div className="mb-6">
+            <p className="text-lg font-semibold text-gray-700">
+              <span className="text-red-600 font-bold">Generación: </span>
+              {generationNameEs}
+            </p>
+          </div>
         )}
 
         {generation && (
-          <p>region principal: {generation.main_region.name}</p>
+          <div className="mb-6">
+            <p className="text-lg font-semibold text-gray-700">
+              <span className="text-red-600 font-bold">Región: </span>
+              {generation.main_region.name}
+              
+            </p>
+          </div>
         )}
 
         {region && (
-          <div>
-            <h3>pokedex</h3>
-            <ul>
+          <div className="mb-6">
+            <h3 className="text-xl font-bold text-red-600 mb-3">Pokedex</h3>
+            <ul className="grid grid-cols-2 gap-2">
               {region.pokedexes.map((p) => (
-                <li key={p.name}>
+                <li 
+                  key={p.name}
+                  className="bg-yellow-300 text-gray-800 px-4 py-2 rounded-lg font-semibold capitalize"
+                >
                   {p.name}
                 </li>
               ))}
@@ -60,46 +99,25 @@ export default function PokemonCard({ pokemon, locations, species, generation, r
           </div>
         )}
 
-      <h3>Estadísticas:</h3>
-      <ul>
+        
+
+      <h3 className="text-xl font-bold text-red-600 mb-4">Estadísticas: </h3>
+      <div className="space-y-3 mb-8">
         {pokemon.stats.map(st => (
-          <li key={st.stat.name}>
-            {st.stat.name}: {st.base_stat}
-          </li>
-        ))}
-      </ul>
-
-
-      {locations.length > 0 && (
-        <>
-          <h3>Encuentros:</h3>
-          {locations.map((loc, index) => (
-            <div key={index}>
-              <strong>{loc.location_area.name}</strong>
-
-              {loc.version_details.map((version, vIndex) => (
-                <div key={vIndex}>
-                  <p>Juego: {version.version.name}</p>
-
-                  {version.encounter_details.map((encounter, eIndex) => (
-                    <div key={eIndex}>
-                      <p>Método: {encounter.method.name}</p>
-
-                      {encounter.condition_values.length > 0 && (
-                        <ul>
-                          {encounter.condition_values.map((cond, cIndex) => (
-                            <li key={cIndex}>{cond.name}</li>
-                          ))}
-                        </ul>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              ))}
+          <div key={st.stat.name} className="flex flex-col gap-1">
+            <div className="flex justify-between items-center">
+              <p className="font-semibold text-gray-700 capitalize text-sm">{st.stat.name}</p>
+              <p className="text-gray-600 text-sm font-bold">{st.base_stat}</p>
             </div>
-          ))}
-        </>
-      )}
+            <div className="w-full bg-gray-300 rounded-full h-4">
+              <div
+                className="bg-red-600 h-4 rounded-full transition-all duration-300"
+                style={{width: `${Math.min((st.base_stat / 150) * 100, 100)}%`}}
+              ></div>
+            </div>
+          </div>
+        ))}
+      </div>
     </div>
   )
 }
