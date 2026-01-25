@@ -1,33 +1,26 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState, FormEvent } from "react";
+import PokemonCard from "./Card";
 
-type pokemon = {
+export type Pokemon = {
   id: number;
   name: string;
-  location_area_encounters: string;
   sprites: Sprites;
   abilities: Ability[];
   types: Types[];
   stats: Stats[];
-};
-
-type Location = {
-  location_area: {
+  species: {
     name: string;
+    url: string;
   };
-  version_details: {
-    encounter_details: {
-      method: {
-        name: string;
-      };
-    }[];
-  }[];
+  abilitydetails: abilityDetails;
+  generation: Generation;
 };
 
 type Sprites = {
   front_default: string;
-  front_shiny: string;  
+  front_shiny: string;
 };
 
 type Ability = {
@@ -37,6 +30,23 @@ type Ability = {
     name: string;
     url: string;
   };
+};
+
+export type abilityDetails = {
+  name: string;
+  effect_entries: {
+    effect: string;
+    short_effect: string;
+    language: {
+      name: string;
+    };
+  }[];
+  names: {
+    name: string;
+    language: {
+      name: string;
+    };
+  }[];
 };
 
 type Types = {
@@ -55,143 +65,179 @@ type Stats = {
   };
 };
 
+export type Species = {
+  generation: {
+    name: string;
+    url: string;
+  };
+};
+
+export type Generation = {
+  name: string;
+  main_region: {
+    name: string;
+    url: string;
+  };
+  names: {
+    name: string;
+    language: {
+      name: string;
+      url: string;
+    };
+  }[];
+};
+
+export type Region = {
+  name: string;
+  pokedexes: {
+    name: string;
+    url: string;
+  }[];
+};
+
 export default function PokemonBuscar() {
   const [name, setName] = useState("");
-  const [pokemon, setPokemon] = useState<pokemon | null>(null);
+  const [pokemon, setPokemon] = useState<Pokemon | null>(null);
   const [error, setError] = useState("");
-  const [locations, setLocations] = useState<Location[]>([]);
-  const [sprites, setSprites] = useState<Sprites | null>(null);
-  const [abilities, setAbilities] = useState<Ability[]>([]);
-  const [types, setTypes] = useState<Types[]>([]);
-  const [stats, setStats] = useState<Stats[]>([]);
+  const [search, setSearch] = useState("");
+  const [region, setRegion] = useState<Region | null>(null);
+  const [generation, setGeneration] = useState<Generation | null>(null);
+  const [species, setSpecies] = useState<Species | null>(null);
+  const [abilityLan, setAbilityLan] = useState<abilityDetails | null>(null);
 
-  async function handleClick(element: React.FormEvent<HTMLFormElement>) {
+  function handleClick(element: FormEvent<HTMLFormElement>) {
     element.preventDefault();
     setError("");
     setPokemon(null);
-
-    try {
-      const endpoint = `pokemon/${name.toLowerCase()}`;
-      console.log(name.toLowerCase());
-      console.log(`https://pokeapi.co/api/v2/${endpoint}/`);
-
-      //traigo datos del pokemon
-      const resPokemon = await fetch(`https://pokeapi.co/api/v2/${endpoint}`);
-      if (!resPokemon.ok) {
-        throw new Error("Pokémon no encontrado");
-      }
-
-      //guardo datos del pokemon solicitados en type
-      const data = await resPokemon.json();
-      setPokemon(data);
-
-      //locations
-      const resLocations = await fetch(data.location_area_encounters);
-      const localizacion = await resLocations.json();
-      setLocations(localizacion);
-      console.log(localizacion);
-
-      //sprites
-      setSprites(data.sprites);
-      console.log(data.sprites);
-
-      //abilities
-      setAbilities(data.abilities);
-      console.log(data.abilities);
-
-      //types
-      setTypes(data.types);
-      console.log(data.types);
-
-      //stats
-      setStats(data.stats);
-      console.log(data.stats);
-    } catch (error) {
-      setError("no se encontró el pokemon");
-    }
+    setSearch(name.toLowerCase());
+    setAbilityLan(null);
+    setGeneration(null);
   }
 
+  useEffect(() => {
+    if (!search) return;
 
-  //estas sesuponen que es un cambio para despues
-  
+    async function fetchPokemon() {
+      try {
+        const res = await fetch(`https://pokeapi.co/api/v2/pokemon/${search}`);
+        console.log(res);
+
+        if (!res.ok) throw new Error();
+        const data = await res.json();
+        setPokemon(data);
+      } catch {
+        setError("No se encontró al pokemon");
+      }
+    }
+    fetchPokemon();
+  }, [search]);
+
+  useEffect(() => {
+    if (!pokemon?.species?.name) return;
+
+    async function fetchRegion() {
+      try {
+        const speciesRes = await fetch(pokemon!.species.url);
+        if (!speciesRes.ok) throw new Error();
+        const species: Species = await speciesRes.json();
+
+        const generationRes = await fetch(species.generation.url);
+        if (!generationRes.ok) throw new Error();
+        const generation: Generation = await generationRes.json();
+
+        const regionRes = await fetch(generation.main_region.url);
+        if (!regionRes.ok) throw new Error();
+        const region: Region = await regionRes.json();
+
+        setSpecies(species);
+        setGeneration(generation);
+        setRegion(region);
+      } catch (err) {
+        console.error("error de fetch", err);
+        setRegion(null);
+      }
+    }
+
+    fetchRegion();
+  }, [pokemon]);
+
+  useEffect(() => {
+    if (!pokemon?.abilities?.[0]?.ability?.url) return;
+
+    async function fetchAbility() {
+      try {
+        const abilityRes = await fetch(pokemon.abilities[0].ability.url);
+        if (!abilityRes.ok) throw new Error();
+        const abiliLan: abilityDetails = await abilityRes.json();
+
+        setAbilityLan(abiliLan);
+      } catch (err) {
+        console.error("error fetch ability", err);
+        setAbilityLan(null);
+      }
+    }
+
+    fetchAbility();
+  }, [pokemon]);
+
+    useEffect (() => {
+      if(!pokemon?.generation?.url) return;
+
+      async function fetchGenerationLan() {
+        try{
+          const generationRes = await fetch(pokemon.generation.url);
+          if(!generationRes.ok) throw new Error();
+          const generaLan: Generation = await generationRes.json();
+
+          setGeneration(generaLan);
+        } catch (err) {
+          console.error("error fetch generation", err);
+          setGeneration(null);
+        }
+      }
+
+      fetchGenerationLan();
+    }, [pokemon]);
 
   return (
-    <div>
-      <form onSubmit={handleClick}>
-        <input
-          type="text"
-          placeholder="Ej: pikachu"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-        />
-        <button type="submit">Buscar</button>
-      </form>
+    <div className="min-h-screen bg-gradient-to-br from-yellow-100 to-red-100 py-8 px-4">
+      <div className="max-w-4xl mx-auto">
+        <h1 className="text-4xl font-bold text-center text-red-600 mb-8">
+          Pokédex
+        </h1>
 
-      {error && <p>{error}</p>}
+        <form onSubmit={handleClick} className="flex gap-2 mb-8 justify-center">
+          <input
+            type="text"
+            placeholder="Ej: ceruledge"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            className="px-4 py-2 rounded-lg border-2 border-yellow-400 focus:outline-none focus:border-red-600 w-64 text-black placeholder-black"
+          ></input>
+          <button
+            type="submit"
+            className="px-6 py-2 bg-red-600 text-white font-bold rounded-lg hover:bg-red-700 transition-colors"
+          >
+            Buscar
+          </button>
+        </form>
 
-      {pokemon && (
-        <div>
-          <h2>{pokemon.name}</h2>
-          <p>id: {pokemon.id}</p>
+        {error && (
+          <p className="text-center text-red-600 font-bold text-lg mb-4">
+            {error}
+          </p>
+        )}
 
-          {locations.length > 0 && (
-            <div>
-              <h3>localizaciones:</h3>
-              <ul>
-                {locations.map((location, index) => (
-                  <li key={index}>
-                    <p>{location.location_area.name}</p>
-
-                    {location.version_details.map((version, vIndex) =>
-                      version.encounter_details.map((encounter, eIndex) => (
-                        <p key={`${vIndex}-${eIndex}`}>
-                          Metodo: {encounter.method.name}
-                        </p>
-                      )),
-                    )}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
-
-          {sprites && (
-            <div>
-              <h3>Sprites:</h3>
-              <img src={sprites.front_default} alt="default" />
-              <img src={sprites.front_shiny} alt="shiny" />
-            </div>
-          )}
-          {abilities.length > 0 && (
-            <div>
-              <h3>habilidades:</h3>
-              <ul>
-                {abilities.map((ability, index) => (
-                  <li key={index}>{ability.ability.name}</li>
-                ))}
-              </ul>
-            </div>
-          )}
-
-          {types.length > 0 && (
-            <div>
-              <h3>Tipo:</h3>
-              <ul>
-                {types.map((type, index) => (
-                  <li key={index}>{type.type.name}</li>
-                ))}
-              </ul>
-            </div>
-          )}
-
-          {stats.map((stat, index) => (
-            <div key={index}>
-              <p>{stat.stat.name}</p>
-              <p>{stat.base_stat}</p>
-            </div>
-          ))}
-        </div>
-      )}
+        {pokemon && species && generation && region && abilityLan && (
+          <PokemonCard
+            pokemon={pokemon}
+            region={region}
+            generation={generation}
+            species={species}
+            abilitydetails={abilityLan}
+          />
+        )}
+      </div>
     </div>
   );
 }
