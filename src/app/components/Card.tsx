@@ -1,5 +1,5 @@
 "use client";
-import type {Pokemon, Species, Region, Generation, abilityDetails} from "./PokemonBuscar"
+import type {Pokemon, Species, Region, Generation, abilityDetails, StatDetails, Pokedex} from "./PokemonBuscar"
 import { getSpanishText } from "@/lib/translate"
 
 type PokemonCardProps = {
@@ -8,11 +8,12 @@ type PokemonCardProps = {
     species: Species;
     generation: Generation;
     abilitydetails?: abilityDetails | null;
-    
+    statsLan?: StatDetails[] | null;
+    pokedexDetails?: Pokedex[] | null;
 }
 
 
-export default function PokemonCard({ pokemon, species, generation, region, abilitydetails}: PokemonCardProps) {
+export default function PokemonCard({ pokemon, species, generation, region, abilitydetails, statsLan, pokedexDetails}: PokemonCardProps) {
     if (!pokemon) {
         return null;
     }
@@ -23,19 +24,19 @@ export default function PokemonCard({ pokemon, species, generation, region, abil
 
     
   return (
-    <div className="bg-white rounded-2xl shadow-xl p-8 max-w-2xl mx-auto border-4 border-yellow-400">
+    <div className="bg-white rounded-2xl shadow-xl p-8 max-w-2xl mx-auto border-4 border-pink-400">
       <h2 className="text-3xl font-bold capitalize text-center text-red-600 mb-2">{pokemon.name}</h2>
       <p className="text-center text-gray-600 font-semibold mb-6">#{ String(pokemon.id).padStart(3, '0')}</p>
 
       <div className="flex justify-center gap-4 mb-8">
         {pokemon.sprites.front_default && (
-          <div className="bg-yellow-100 rounded-lg p-4">
+          <div className="bg-pink-100 rounded-lg p-4">
             <p className="text-black font-semibold">Normal: </p>
             <img src={pokemon.sprites.front_default} className="w-40 h-40" />
           </div>
         )}
         {pokemon.sprites.front_shiny && (
-          <div className="bg-yellow-100 rounded-lg p-4">
+          <div className="bg-blue-100 rounded-lg p-4">
             <p className="text-black font-semibold">Shiny: </p>
             <img src={pokemon.sprites.front_shiny} className="w-40 h-40" />
           </div>
@@ -83,16 +84,16 @@ export default function PokemonCard({ pokemon, species, generation, region, abil
           </div>
         )}
 
-        {region && (
+        {region && pokedexDetails && (
           <div className="mb-6">
             <h3 className="text-xl font-bold text-red-600 mb-3">Pokedex</h3>
             <ul className="grid grid-cols-2 gap-2">
-              {region.pokedexes.map((p) => (
+              {region.pokedexes.map((p, index) => (
                 <li 
                   key={p.name}
-                  className="bg-yellow-300 text-gray-800 px-4 py-2 rounded-lg font-semibold capitalize"
+                  className="bg-pink-300 text-gray-800 px-4 py-2 rounded-lg font-semibold capitalize"
                 >
-                  {p.name}
+                  {pokedexDetails[index] ? getSpanishText(pokedexDetails[index].names || [], n => n.name, p.name) : p.name}
                 </li>
               ))}
             </ul>
@@ -103,10 +104,12 @@ export default function PokemonCard({ pokemon, species, generation, region, abil
 
       <h3 className="text-xl font-bold text-red-600 mb-4">Estadísticas: </h3>
       <div className="space-y-3 mb-8">
-        {pokemon.stats.map(st => (
+        {pokemon.stats.map((st, index) => (
           <div key={st.stat.name} className="flex flex-col gap-1">
             <div className="flex justify-between items-center">
-              <p className="font-semibold text-gray-700 capitalize text-sm">{st.stat.name}</p>
+              <p className="font-semibold text-gray-700 capitalize text-sm">
+                {statsLan && statsLan[index] ? getSpanishText(statsLan[index].names || [], n => n.name, st.stat.name) : st.stat.name}
+              </p>
               <p className="text-gray-600 text-sm font-bold">{st.base_stat}</p>
             </div>
             <div className="w-full bg-gray-300 rounded-full h-4">

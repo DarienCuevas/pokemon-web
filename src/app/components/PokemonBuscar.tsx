@@ -61,9 +61,17 @@ type Stats = {
   base_stat: number;
   stat: {
     name: string;
-    url: string;
   };
 };
+
+export type StatDetails = {
+  names: {
+    name: string;
+    language: {
+      name: string;
+    };
+  }[];
+}
 
 export type Species = {
   generation: {
@@ -95,6 +103,18 @@ export type Region = {
   }[];
 };
 
+export type Pokedex = {
+  names: {
+    name: string;
+    language: {
+      name: string;
+      url: string;
+    };
+  }[];
+};
+
+
+
 export default function PokemonBuscar() {
   const [name, setName] = useState("");
   const [pokemon, setPokemon] = useState<Pokemon | null>(null);
@@ -104,6 +124,8 @@ export default function PokemonBuscar() {
   const [generation, setGeneration] = useState<Generation | null>(null);
   const [species, setSpecies] = useState<Species | null>(null);
   const [abilityLan, setAbilityLan] = useState<abilityDetails | null>(null);
+  const [statsLan, setStatsLan] = useState<StatDetails[] | null>(null);
+  const [pokedexDetails, setPokedexDetails] = useState<Pokedex[] | null>(null);
 
   function handleClick(element: FormEvent<HTMLFormElement>) {
     element.preventDefault();
@@ -178,29 +200,77 @@ export default function PokemonBuscar() {
     }
 
     fetchAbility();
-  }, [pokemon]);
+  }, [pokemon?.abilities?.[0]?.ability?.url]);
 
-    useEffect (() => {
-      if(!pokemon?.generation?.url) return;
+  useEffect(() => {
+    if (!pokemon?.generation?.url) return;
 
-      async function fetchGenerationLan() {
-        try{
-          const generationRes = await fetch(pokemon.generation.url);
-          if(!generationRes.ok) throw new Error();
-          const generaLan: Generation = await generationRes.json();
+    async function fetchGenerationLan() {
+      try {
+        const generationRes = await fetch(pokemon.generation.url);
+        if (!generationRes.ok) throw new Error();
+        const generaLan: Generation = await generationRes.json();
 
-          setGeneration(generaLan);
-        } catch (err) {
-          console.error("error fetch generation", err);
-          setGeneration(null);
-        }
+        setGeneration(generaLan);
+      } catch (err) {
+        console.error("error fetch generation", err);
+        setGeneration(null);
       }
+    }
 
-      fetchGenerationLan();
-    }, [pokemon]);
+    fetchGenerationLan();
+  }, [pokemon?.generation?.url]);
+
+  useEffect(() => {
+    if (!pokemon?.stats || pokemon.stats.length === 0) return;
+
+    async function fetchStats() {
+      try {
+        const statsData: StatDetails[] = [];
+        
+        for (const stat of pokemon.stats) {
+          const statRes = await fetch(stat.stat.url);
+          if (!statRes.ok) throw new Error();
+          const statDetail: StatDetails = await statRes.json();
+          statsData.push(statDetail);
+        }
+
+        setStatsLan(statsData);
+      } catch (err) {
+        console.error("error fetch stats", err);
+        setStatsLan(null);
+      }
+    }
+
+    fetchStats();
+  }, [pokemon?.stats]);
+
+  useEffect(() => {
+    if (!region?.pokedexes || region.pokedexes.length === 0) return;
+
+    async function fetchPokedexDetails() {
+      try {
+        const pokedexData: Pokedex[] = [];
+        
+        for (const pokedex of region.pokedexes) {
+          const pokedexRes = await fetch(pokedex.url);
+          if (!pokedexRes.ok) throw new Error();
+          const pokedexDetail: Pokedex = await pokedexRes.json();
+          pokedexData.push(pokedexDetail);
+        }
+
+        setPokedexDetails(pokedexData);
+      } catch (err) {
+        console.error("error fetch pokedex details", err);
+        setPokedexDetails(null);
+      }
+    }
+
+    fetchPokedexDetails();
+  }, [region?.pokedexes]);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-yellow-100 to-red-100 py-8 px-4">
+    <div className="min-h-screen bg-gradient-to-br from-pink-200 to-blue-200 py-8 px-4">
       <div className="max-w-4xl mx-auto">
         <h1 className="text-4xl font-bold text-center text-red-600 mb-8">
           Pokédex
@@ -212,7 +282,7 @@ export default function PokemonBuscar() {
             placeholder="Ej: ceruledge"
             value={name}
             onChange={(e) => setName(e.target.value)}
-            className="px-4 py-2 rounded-lg border-2 border-yellow-400 focus:outline-none focus:border-red-600 w-64 text-black placeholder-black"
+            className="px-4 py-2 rounded-lg border-2 border-pink-400 focus:outline-none focus:border-red-600 w-64 text-black placeholder-black/20"
           ></input>
           <button
             type="submit"
@@ -228,13 +298,15 @@ export default function PokemonBuscar() {
           </p>
         )}
 
-        {pokemon && species && generation && region && abilityLan && (
+        {pokemon && species && generation && region && abilityLan && statsLan && pokedexDetails && (
           <PokemonCard
             pokemon={pokemon}
             region={region}
             generation={generation}
             species={species}
             abilitydetails={abilityLan}
+            statsLan={statsLan}
+            pokedexDetails={pokedexDetails}
           />
         )}
       </div>
