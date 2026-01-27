@@ -57,6 +57,16 @@ type Types = {
   };
 };
 
+export type TypeDetails = {
+  names: {
+    name: string;
+    language: {
+      name: string;
+      url: string;
+    };
+  }[];
+};
+
 type Stats = {
   base_stat: number;
   stat: {
@@ -71,7 +81,7 @@ export type StatDetails = {
       name: string;
     };
   }[];
-}
+};
 
 export type Species = {
   generation: {
@@ -113,8 +123,6 @@ export type Pokedex = {
   }[];
 };
 
-
-
 export default function PokemonBuscar() {
   const [name, setName] = useState("");
   const [pokemon, setPokemon] = useState<Pokemon | null>(null);
@@ -126,6 +134,7 @@ export default function PokemonBuscar() {
   const [abilityLan, setAbilityLan] = useState<abilityDetails | null>(null);
   const [statsLan, setStatsLan] = useState<StatDetails[] | null>(null);
   const [pokedexDetails, setPokedexDetails] = useState<Pokedex[] | null>(null);
+  const [typeDetails, setTypeDetails] = useState<TypeDetails[] | null>(null);
 
   function handleClick(element: FormEvent<HTMLFormElement>) {
     element.preventDefault();
@@ -227,7 +236,7 @@ export default function PokemonBuscar() {
     async function fetchStats() {
       try {
         const statsData: StatDetails[] = [];
-        
+
         for (const stat of pokemon.stats) {
           const statRes = await fetch(stat.stat.url);
           if (!statRes.ok) throw new Error();
@@ -251,7 +260,7 @@ export default function PokemonBuscar() {
     async function fetchPokedexDetails() {
       try {
         const pokedexData: Pokedex[] = [];
-        
+
         for (const pokedex of region.pokedexes) {
           const pokedexRes = await fetch(pokedex.url);
           if (!pokedexRes.ok) throw new Error();
@@ -268,6 +277,27 @@ export default function PokemonBuscar() {
 
     fetchPokedexDetails();
   }, [region?.pokedexes]);
+
+  useEffect(() => {
+    if (!pokemon?.types || pokemon.types.length === 0) return;
+
+    async function fetchTypes() {
+      try {
+        const typesData: TypeDetails[] = [];
+        for (const t of pokemon.types) {
+          const typeRes = await fetch(t.type.url);
+          if (!typeRes.ok) throw new Error();
+          const typeDetail: TypeDetails = await typeRes.json();
+          typesData.push(typeDetail);
+        }
+        setTypeDetails(typesData);
+      } catch (err) {
+        console.error("error fetch type details", err);
+        setTypeDetails(null);
+      }
+    }
+    fetchTypes();
+  }, [pokemon?.types]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-pink-200 to-blue-200 py-8 px-4">
@@ -298,17 +328,25 @@ export default function PokemonBuscar() {
           </p>
         )}
 
-        {pokemon && species && generation && region && abilityLan && statsLan && pokedexDetails && (
-          <PokemonCard
-            pokemon={pokemon}
-            region={region}
-            generation={generation}
-            species={species}
-            abilitydetails={abilityLan}
-            statsLan={statsLan}
-            pokedexDetails={pokedexDetails}
-          />
-        )}
+        {pokemon &&
+          species &&
+          generation &&
+          region &&
+          abilityLan &&
+          statsLan &&
+          pokedexDetails &&
+          typeDetails && (
+            <PokemonCard
+              pokemon={pokemon}
+              region={region}
+              generation={generation}
+              species={species}
+              abilitydetails={abilityLan}
+              statsLan={statsLan}
+              pokedexDetails={pokedexDetails}
+              typeDetails={typeDetails}
+            />
+          )}
       </div>
     </div>
   );
