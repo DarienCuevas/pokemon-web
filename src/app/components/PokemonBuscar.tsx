@@ -41,12 +41,16 @@ export type abilityDetails = {
       name: string;
     };
   }[];
-  names: {
-    name: string;
+  flavor_text_entries: {
+    flavor_text: string;
     language: {
+      name:string;
+    }
+    version_group: {
       name: string;
-    };
-  }[];
+      url: string;
+    }
+  }[]
 };
 
 type Types = {

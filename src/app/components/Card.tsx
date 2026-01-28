@@ -1,7 +1,7 @@
 "use client";
 import React, { useState } from "react";
 import type { Pokemon, Species, Region, Generation, abilityDetails, StatDetails, Pokedex, TypeDetails } from "./PokemonBuscar";
-import { getSpanishText } from "@/lib/translate";
+import { getSpanishText, getAbilityDescriptionEs, getAbilityFlavorTextEs } from "@/lib/translate";
 
 type PokemonCardProps = {
   pokemon: Pokemon;
@@ -142,6 +142,13 @@ export default function PokemonCard({
             <p className="text-lg font-semibold text-gray-700 capitalize mb-2">
               {getSpanishText(abilitydetails.names || [], n => n.name, abilitydetails.name)}
             </p>
+
+            {/* Flavor text de la habilidad en español */}
+            {abilitydetails.flavor_text_entries && abilitydetails.flavor_text_entries.length > 0 && (
+              <p className="text-gray-600 italic text-base leading-relaxed">
+                "{getAbilityFlavorTextEs(abilitydetails)}"
+              </p>
+            )}
           </div>
         )}
 

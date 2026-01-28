@@ -33,3 +33,25 @@ export function getAbilityDescriptionEs(ability: {
 
   return esEntry.effect || esEntry.short_effect;
 }
+// Función para obtener el flavor text de la habilidad en español
+export function getAbilityFlavorTextEs(ability: {
+  flavor_text_entries: {
+    flavor_text: string;
+    language: {
+      name: string;
+    }
+    version_group?: {
+      name: string;
+      url: string;
+    }
+  }[]
+}): string {
+  const esEntry = ability.flavor_text_entries.find(
+    e => e.language.name === "es"
+  );
+
+  if (!esEntry) return "";
+
+  // Limpia el texto de saltos de línea y espacios extra
+  return esEntry.flavor_text.replace(/\n/g, " ").replace(/\s+/g, " ").trim();
+}
